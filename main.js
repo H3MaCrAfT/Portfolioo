@@ -1,128 +1,33 @@
+ const button = document.createElement("button");
+button.innerText = "الوضع الليلي";
+button.style.position = "fixed";
+button.style.bottom = "20px";
+button.style.left = "20px";
+button.style.padding = "10px 15px";
+button.style.border = "none";
+button.style.borderRadius = "8px";
+button.style.background = "#1e8a6d";
+button.style.color = "white";
+button.style.cursor = "pointer";
+button.style.zIndex = "200";
+button.style.boxShadow = "0 4px 10px rgba(0,0,0,0.3)";
+document.body.appendChild(button);
 
-        const firebaseConfig = {
-            apiKey: "AIzaSy...",
-            authDomain: "your-project.firebaseapp.com",
-            projectId: "your-project",
-            storageBucket: "your-project.appspot.com",
-            messagingSenderId: "...",
-            appId: "..."
-        };
+button.onclick = () => {
+    document.body.classList.toggle("dark");
+    button.innerText = document.body.classList.contains("dark")
+        ? "الوضع النهاري"
+        : "الوضع الليلي";
+};
 
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const storage = firebase.storage();
+document.documentElement.style.scrollBehavior = "smooth";
 
-        const adminLoginContainer = document.getElementById('admin-login-container');
-        const adminLoginBtn = document.getElementById('admin-login-btn');
-        const adminPasswordInput = document.getElementById('admin-password-input');
-        const adminLogoutBtn = document.getElementById('admin-logout-btn');
-        const adminPanel = document.getElementById('admin-panel');
-        const uploadForm = document.getElementById('upload-form');
-        const anasheedList = document.getElementById('anasheed-list');
-        const audioPlayer = document.getElementById('audio-player');
-
-        const ADMIN_PASSWORDS = ['MOHA1432', 'EBRA1432'];
-
-        function showAdminUI() {
-            adminLoginContainer.style.display = 'none';
-            adminLogoutBtn.style.display = 'block';
-            adminPanel.style.display = 'block';
+window.addEventListener("scroll", () => {
+    document.querySelectorAll("section").forEach((s) => {
+        let rect = s.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 80) {
+            s.style.opacity = 1;
+            s.style.transform = "translateY(0)";
         }
-
-        function hideAdminUI() {
-            adminLoginContainer.style.display = 'flex'; 
-            adminLogoutBtn.style.display = 'none';
-            adminPanel.style.display = 'none';
-            adminPasswordInput.value = '';
-        }
-        
-        function addNasheedToPage(data) {
-            const item = document.createElement('div');
-            item.className = 'nasheed-item';
-            item.innerHTML = `
-                <img src="${data.imageUrl}" alt="${data.title}">
-                <h3>${data.title}</h3>
-                <p>${data.artist}</p>
-            `;
-            
-            item.onclick = () => {
-                audioPlayer.src = data.audioUrl;
-                audioPlayer.play();
-            };
-
-            anasheedList.prepend(item);
-        }
-
-        adminLoginBtn.addEventListener('click', () => {
-            const enteredPassword = adminPasswordInput.value;
-            if (ADMIN_PASSWORDS.includes(enteredPassword)) {
-                localStorage.setItem('isAdminLoggedIn', 'true');
-                showAdminUI();
-            } else {
-                alert('كلمة المرور غير صحيحة!');
-            }
-        });
-
-        adminLogoutBtn.addEventListener('click', () => {
-            localStorage.removeItem('isAdminLoggedIn');
-            hideAdminUI();
-        });
-
-        uploadForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            
-            const submitButton = uploadForm.querySelector('button[type="submit"]');
-            submitButton.disabled = true;
-            submitButton.textContent = 'جاري الرفع...';
-
-            const title = document.getElementById('title').value;
-            const artist = document.getElementById('artist').value;
-            const audioFile = document.getElementById('audio-file').files[0];
-            const imageFile = document.getElementById('image-file').files[0];
-
-            const audioRef = storage.ref().child('anasheed/' + audioFile.name);
-            audioRef.put(audioFile).then(snapshot => {
-                return snapshot.ref.getDownloadURL();
-            }).then(audioUrl => {
-                const imageRef = storage.ref().child('images/' + imageFile.name);
-                return imageRef.put(imageFile).then(snapshot => {
-                    return snapshot.ref.getDownloadURL();
-                }).then(imageUrl => {
-                    const newNasheedData = { title, artist, audioUrl, imageUrl };
-                    return db.collection("anasheed").add(newNasheedData);
-                }).then(() => {
-                    addNasheedToPage({ title, artist, audioUrl, imageUrl });
-                    uploadForm.reset();
-                    alert('تم رفع النشيد بنجاح!');
-                });
-            }).catch(error => {
-                console.error("Error during upload:", error);
-                alert('حدث خطأ أثناء الرفع.');
-            }).finally(() => {
-                submitButton.disabled = false;
-                submitButton.textContent = 'رفع النشيد';
-            });
-        });
-
-
-        document.addEventListener('DOMContentLoaded', () => {
-            if (localStorage.getItem('isAdminLoggedIn') === 'true') {
-                showAdminUI();
-            } else {
-                hideAdminUI();
-            }
-
-            db.collection("anasheed").orderBy("createdAt", "desc").get().then((querySnapshot) => {
-                anasheedList.innerHTML = '';
-                if (querySnapshot.empty) {
-                    anasheedList.innerHTML = '<p>لا توجد أناشيد حالياً.</p>';
-                    return;
-                }
-                querySnapshot.forEach((doc) => {
-                    addNasheedToPage(doc.data());
-                });
-            }).catch(error => {
-                console.error("Error getting documents: ", error);
-                anasheedList.innerHTML = '<p>حدث خطأ في تحميل الأناشيد.</p>';
-            });
-        });
+    });
+});
